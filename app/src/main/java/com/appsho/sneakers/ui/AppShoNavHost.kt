@@ -7,6 +7,7 @@ import com.appsho.sneakers.RunGearApplication
 @Composable
 fun AppShoNavHost(
     app: RunGearApplication,
+    themeViewModel: ThemeViewModel,
     currentTab: AppTab,
     onTabChange: (AppTab) -> Unit
-) = RunGearNavHost(app, currentTab, onTabChange)
+) = RunGearNavHost(app, themeViewModel, currentTab, onTabChange)

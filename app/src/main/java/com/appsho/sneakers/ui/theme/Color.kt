@@ -15,3 +15,12 @@ val Danger = Color(0xFFEF4444)
 val DangerSoft = Color(0xFFFEE2E2)
 val Border = Color(0xFFE5E7EB)
 val Shadow = Color(0x1A111827)
+
+// Modo escuro
+val DarkBg = Color(0xFF0F1117)
+val DarkSurface = Color(0xFF1A1D26)
+val DarkSurfaceVariant = Color(0xFF252A36)
+val DarkOnBg = Color(0xFFF3F4F6)
+val DarkOnSurfaceVariant = Color(0xFF9CA3AF)
+val DarkBorder = Color(0xFF2E3440)
+val DarkAccentSoft = Color(0xFF312E81)

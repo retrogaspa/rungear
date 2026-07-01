@@ -8,36 +8,54 @@ import androidx.activity.SystemBarStyle
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
-import com.appsho.sneakers.ui.RunGearNavHost
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.appsho.sneakers.ui.AppTab
-import com.appsho.sneakers.ui.theme.RunGearTheme
+import com.appsho.sneakers.ui.RunGearNavHost
+import com.appsho.sneakers.ui.ThemeViewModel
 import com.appsho.sneakers.ui.theme.CanvasBg
+import com.appsho.sneakers.ui.theme.DarkBg
+import com.appsho.sneakers.ui.theme.DarkSurface
+import com.appsho.sneakers.ui.theme.RunGearTheme
+import com.appsho.sneakers.ui.theme.SurfaceWhite
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(
-                scrim = CanvasBg.toArgb(),
-                darkScrim = CanvasBg.toArgb()
-            ),
-            navigationBarStyle = SystemBarStyle.light(
-                scrim = android.graphics.Color.WHITE,
-                darkScrim = android.graphics.Color.WHITE
-            )
-        )
-
         val app = application as RunGearApplication
 
         setContent {
-            RunGearTheme {
+            val themeViewModel: ThemeViewModel = viewModel(
+                factory = ThemeViewModel.Factory(app.themePreferences)
+            )
+            val darkMode by themeViewModel.darkMode.collectAsState()
+
+            SideEffect {
+                val statusScrim = if (darkMode) DarkBg.toArgb() else CanvasBg.toArgb()
+                val navScrim = if (darkMode) DarkSurface.toArgb() else SurfaceWhite.toArgb()
+                enableEdgeToEdge(
+                    statusBarStyle = if (darkMode) {
+                        SystemBarStyle.dark(statusScrim)
+                    } else {
+                        SystemBarStyle.light(statusScrim, statusScrim)
+                    },
+                    navigationBarStyle = if (darkMode) {
+                        SystemBarStyle.dark(navScrim)
+                    } else {
+                        SystemBarStyle.light(navScrim, navScrim)
+                    }
+                )
+            }
+
+            RunGearTheme(darkTheme = darkMode) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -45,6 +63,7 @@ class MainActivity : ComponentActivity() {
                     var currentTab by rememberSaveable { mutableStateOf(AppTab.SNEAKERS) }
                     RunGearNavHost(
                         app = app,
+                        themeViewModel = themeViewModel,
                         currentTab = currentTab,
                         onTabChange = { currentTab = it }
                     )

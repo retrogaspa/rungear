@@ -2,31 +2,35 @@ package com.appsho.sneakers.util
 
 import android.graphics.Path
 import android.graphics.RectF
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 /**
- * Badge estilo corrida (referência Strava) — retângulo vertical + círculo no topo.
- * Ancorado no canto superior direito da foto.
+ * Badge estilo corrida (referência Strava) — gota no topo + retângulo vertical.
+ * Colado à direita; pequena margem no topo.
  */
 object SneakerBadgeMetrics {
 
     const val SOURCE_ICON_PX = 100f
     const val REFERENCE_IMAGE_WIDTH_PX = 1080f
 
-    /** Margens do badge em relação ao topo/direita da foto (px na ref. 1080). */
-    const val MARGIN_TOP_REF = 12f
-    const val MARGIN_RIGHT_REF = 12f
+    /** Margem do topo (~14 px numa foto de 1080 px de largura). */
+    const val MARGIN_TOP_REF = 14f
+    const val MARGIN_RIGHT_REF = 0f
 
-    /** Faixa retangular do nome (estreita, vertical). */
-    const val BODY_WIDTH_REF = 38f
+    const val BODY_WIDTH_MIN_REF = 44f
+    const val BULB_DIAMETER_REF = 92f
 
-    /** Círculo do ícone — maior que a faixa de texto. */
-    const val BULB_DIAMETER_REF = 74f
+    /**
+     * Quanto o retângulo sobe dentro do círculo (0–1 do diâmetro).
+     * Cria a “gota” contínua em vez de bola separada.
+     */
+    const val BULB_STEM_OVERLAP_RATIO = 0.46f
 
-    /** Próximo ao tamanho da badge “Amazfit T-Rex 3” na referência Strava. */
     const val TEXT_SIZE_REF = 30f
-    const val TEXT_PAD_VERTICAL_REF = 14f
-    const val ICON_PAD_IN_BULB_REF = 8f
+    const val TEXT_PAD_HORIZONTAL_REF = 12f
+    const val TEXT_PAD_VERTICAL_REF = 22f
+    const val ICON_PAD_IN_BULB_REF = 4f
 
     fun scale(imageWidth: Float, refPx: Float): Float =
         imageWidth * refPx / REFERENCE_IMAGE_WIDTH_PX
@@ -54,17 +58,23 @@ object SneakerBadgeMetrics {
         val marginRight = scale(imageWidth, MARGIN_RIGHT_REF)
 
         val bodyRight = imageWidth - marginRight
-        val bodyWidth = scale(imageWidth, BODY_WIDTH_REF)
+
+        val textHorizPad = scale(imageWidth, TEXT_PAD_HORIZONTAL_REF)
+        val textVertPad = scale(imageWidth, TEXT_PAD_VERTICAL_REF)
+        val bodyWidth = max(
+            scale(imageWidth, BODY_WIDTH_MIN_REF),
+            textSizePx + textHorizPad * 2f
+        )
         val bodyLeft = bodyRight - bodyWidth
 
         val bulbDiameter = scale(imageWidth, BULB_DIAMETER_REF)
         val bulbRadius = bulbDiameter / 2f
-
-        // Círculo no topo; retângulo do nome começa na linha de tangência inferior
         val bulbTop = marginTop
-        val bodyTop = bulbTop + bulbDiameter
-        val textPad = scale(imageWidth, TEXT_PAD_VERTICAL_REF)
-        val bodyBottom = bodyTop + textLength + textPad * 2f
+
+        // Retângulo sobe dentro do círculo → forma de gota contínua
+        val stemOverlap = bulbDiameter * BULB_STEM_OVERLAP_RATIO
+        val bodyTop = bulbTop + bulbDiameter - stemOverlap
+        val bodyBottom = bodyTop + textLength + textVertPad * 2f
 
         val bulbCenterX = bodyRight - bulbRadius
         val bulbCenterY = bulbTop + bulbRadius
@@ -74,7 +84,14 @@ object SneakerBadgeMetrics {
             bulbCenterX - bulbRadius + iconPad,
             bulbTop + iconPad,
             bodyRight - iconPad,
-            bodyTop - iconPad
+            bulbTop + bulbDiameter - iconPad
+        )
+
+        val textClipRect = RectF(
+            bodyLeft + textHorizPad,
+            bodyTop + textVertPad,
+            bodyRight - textHorizPad,
+            bodyBottom - textVertPad
         )
 
         return Layout(
@@ -87,7 +104,7 @@ object SneakerBadgeMetrics {
             bulbRadius = bulbRadius,
             bulbTop = bulbTop,
             iconDestRect = iconDest,
-            textClipRect = RectF(bodyLeft, bodyTop, bodyRight, bodyBottom)
+            textClipRect = textClipRect
         )
     }
 }
@@ -95,7 +112,7 @@ object SneakerBadgeMetrics {
 object SneakerBadgePath {
 
     /**
-     * Retângulo (cantos inferiores quadrados) + círculo saindo do topo, colado à direita.
+     * Gota contínua: retângulo funde com círculo (retângulo entra no círculo).
      */
     fun build(layout: SneakerBadgeMetrics.Layout): Path {
         val bodyPath = Path().apply {
