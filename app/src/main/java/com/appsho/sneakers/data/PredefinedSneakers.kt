@@ -94,13 +94,13 @@ object PredefinedSneakers {
             name = "Asics",
             models = listOf(
                 PredefinedModel(
-                    key = "dynablast",
-                    name = "Dynablast",
+                    key = "dynablast_5",
+                    name = "Dynablast 5",
                     colors = listOf(
                         PredefinedColorVariant(
                             key = "azul_claro",
                             name = "Azul Claro",
-                            iconResId = R.drawable.sneaker_asics_dynablast_azul_claro
+                            iconResId = R.drawable.sneaker_asics_dynablast_5_azul_claro
                         )
                     )
                 )

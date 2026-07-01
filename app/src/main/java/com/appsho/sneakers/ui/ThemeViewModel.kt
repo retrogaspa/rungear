@@ -10,9 +10,14 @@ class ThemeViewModel(
 ) : ViewModel() {
 
     val darkMode: StateFlow<Boolean> = themePreferences.darkMode
+    val collectionGridColumns: StateFlow<Int> = themePreferences.collectionGridColumns
 
     fun setDarkMode(enabled: Boolean) {
         themePreferences.setDarkMode(enabled)
+    }
+
+    fun setCollectionGridColumns(columns: Int) {
+        themePreferences.setCollectionGridColumns(columns)
     }
 
     class Factory(

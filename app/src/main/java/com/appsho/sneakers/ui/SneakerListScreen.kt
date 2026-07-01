@@ -89,7 +89,8 @@ private enum class CatalogStep { BRAND, MODEL, COLOR }
 @Composable
 fun SneakerListScreen(
     viewModel: SneakerListViewModel,
-    snackbarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState,
+    gridColumns: Int = 2
 ) {
     val sneakers by viewModel.sneakers.collectAsState()
     var showAddSheet by remember { mutableStateOf(false) }
@@ -119,16 +120,23 @@ fun SneakerListScreen(
                         title = "Coleção",
                         subtitle = "${sneakers.size} tênis na coleção"
                     )
+                    val columns = gridColumns.coerceIn(1, 4)
+                    val gridSpacing = when (columns) {
+                        1 -> 0.dp
+                        2 -> 12.dp
+                        else -> 8.dp
+                    }
                     LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
+                        columns = GridCells.Fixed(columns),
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 100.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(gridSpacing),
+                        verticalArrangement = Arrangement.spacedBy(gridSpacing)
                     ) {
                         items(sneakers, key = { it.id }) { sneaker ->
                             SneakerGridCard(
                                 sneaker = sneaker,
+                                gridColumns = columns,
                                 onDelete = { sneakerToDelete = sneaker }
                             )
                         }
@@ -205,13 +213,36 @@ fun SneakerListScreen(
 }
 
 @Composable
-private fun SneakerGridCard(sneaker: Sneaker, onDelete: () -> Unit) {
+private fun SneakerGridCard(
+    sneaker: Sneaker,
+    gridColumns: Int,
+    onDelete: () -> Unit
+) {
+    val cardPadding = when (gridColumns) {
+        1 -> 12.dp
+        2 -> 10.dp
+        3 -> 6.dp
+        else -> 4.dp
+    }
+    val iconInnerPadding = when (gridColumns) {
+        1, 2 -> 6.dp
+        3 -> 4.dp
+        else -> 2.dp
+    }
+    val nameMaxLines = if (gridColumns >= 4) 1 else 2
+    val nameStyle = when (gridColumns) {
+        1, 2 -> MaterialTheme.typography.titleMedium
+        3 -> MaterialTheme.typography.titleSmall
+        else -> MaterialTheme.typography.labelMedium
+    }
+    val deleteIconSize = if (gridColumns >= 4) 18.dp else 24.dp
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(CardShape)
             .background(MaterialTheme.colorScheme.surface)
-            .padding(10.dp)
+            .padding(cardPadding)
     ) {
         Box {
             Box(
@@ -220,7 +251,7 @@ private fun SneakerGridCard(sneaker: Sneaker, onDelete: () -> Unit) {
                     .aspectRatio(1f)
                     .clip(ImageShape)
                     .background(Color.Black)
-                    .padding(6.dp),
+                    .padding(iconInnerPadding),
                 contentAlignment = Alignment.Center
             ) {
                 SneakerIcon(
@@ -230,19 +261,25 @@ private fun SneakerGridCard(sneaker: Sneaker, onDelete: () -> Unit) {
                     contentScale = ContentScale.Fit
                 )
             }
-            IconButton(onClick = onDelete, modifier = Modifier.align(Alignment.TopEnd)) {
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .then(if (gridColumns >= 4) Modifier.size(32.dp) else Modifier)
+            ) {
                 Icon(
                     Icons.Outlined.DeleteOutline,
                     contentDescription = "Excluir",
-                    tint = MaterialTheme.colorScheme.error
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(deleteIconSize)
                 )
             }
         }
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(if (gridColumns >= 4) 4.dp else 8.dp))
         Text(
             text = sneaker.name,
-            style = MaterialTheme.typography.titleMedium,
-            maxLines = 2,
+            style = nameStyle,
+            maxLines = nameMaxLines,
             overflow = TextOverflow.Ellipsis
         )
     }

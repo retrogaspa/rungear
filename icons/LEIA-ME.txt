@@ -9,7 +9,7 @@ CATALOGO (nome exato do arquivo):
 icons/fila/racer_carbon_2/verde.png
 icons/olympikus/corre_5/preto_amarelo.png
 icons/chunta/sn/beige.png
-icons/asics/dynablast/azul_claro.png
+icons/asics/dynablast_5/azul_claro.png
 
 PERSONALIZADO:
 --------------

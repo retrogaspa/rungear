@@ -9,7 +9,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,18 +16,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.SaveAlt
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.SportsSoccer
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -37,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -62,6 +66,9 @@ import com.appsho.sneakers.ui.components.StepIndicator
 import com.appsho.sneakers.ui.components.SneakerIcon
 import com.appsho.sneakers.ui.theme.ImageShape
 
+private const val SNEAKER_GRID_COLUMNS = 3
+private const val SEARCH_MIN_SNEAKERS = 4
+
 @Composable
 fun ComposeImageScreen(
     viewModel: ComposeImageViewModel,
@@ -74,9 +81,16 @@ fun ComposeImageScreen(
 
     var showResult by rememberSaveable { mutableStateOf(false) }
     var dismissedResult by rememberSaveable { mutableStateOf(false) }
+    var sneakerSearchQuery by rememberSaveable { mutableStateOf("") }
 
     val hasSelection = uiState.baseImageUri != null && uiState.selectedSneakerId != null
     val resultReady = uiState.previewBitmap != null && !uiState.isProcessing
+
+    val filteredSneakers = remember(sneakers, sneakerSearchQuery) {
+        val query = sneakerSearchQuery.trim()
+        if (query.isEmpty()) sneakers
+        else sneakers.filter { it.name.contains(query, ignoreCase = true) }
+    }
 
     LaunchedEffect(uiState.baseImageUri, uiState.selectedSneakerId) {
         dismissedResult = false
@@ -114,7 +128,7 @@ fun ComposeImageScreen(
             )
             EmptyState(
                 icon = Icons.Outlined.SportsSoccer,
-                title = "Cadastre um tênis primeiro",
+                title = "Nenhum tênis ainda",
                 description = "Vá em Coleção e adicione pelo menos um tênis para começar a criar.",
                 actionLabel = "Ir para Coleção",
                 onAction = onNavigateToCollection,
@@ -153,7 +167,7 @@ fun ComposeImageScreen(
         ) {
             ScreenHeader(
                 title = "Criar",
-                subtitle = "Escolha a foto e o tênis — o resultado aparece em seguida"
+                subtitle = "Escolha a foto, depois o tênis — o resultado aparece em seguida"
             )
 
             StepIndicator(
@@ -163,7 +177,22 @@ fun ComposeImageScreen(
                 modifier = Modifier.padding(horizontal = 20.dp)
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            SectionCard(modifier = Modifier.padding(horizontal = 20.dp)) {
+                ActionRow(
+                    icon = Icons.Outlined.Image,
+                    title = "Escolher foto",
+                    subtitle = if (uiState.baseImageUri != null) {
+                        "Foto selecionada — toque para trocar"
+                    } else {
+                        "Toque para abrir a galeria"
+                    },
+                    onClick = { imagePicker.launch("image/*") }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             PreviewFrame(
                 modifier = Modifier.padding(horizontal = 20.dp),
@@ -213,31 +242,50 @@ fun ComposeImageScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             SectionCard(modifier = Modifier.padding(horizontal = 20.dp)) {
-                ActionRow(
-                    icon = Icons.Outlined.Image,
-                    title = "1. Escolher foto",
-                    subtitle = if (uiState.baseImageUri != null) "Foto selecionada ✓" else "Toque para abrir a galeria",
-                    onClick = { imagePicker.launch("image/*") }
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("2. Escolher tênis", style = MaterialTheme.typography.titleMedium)
+                Text("Escolher tênis", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(10.dp))
 
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(horizontal = 2.dp)
-                ) {
-                    items(sneakers, key = { it.id }) { sneaker ->
-                        SneakerChip(
-                            sneaker = sneaker,
-                            selected = uiState.selectedSneakerId == sneaker.id,
-                            onClick = { viewModel.selectSneaker(sneaker.id) }
+                if (sneakers.size >= SEARCH_MIN_SNEAKERS) {
+                    OutlinedTextField(
+                        value = sneakerSearchQuery,
+                        onValueChange = { sneakerSearchQuery = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        placeholder = { Text("Buscar tênis…") },
+                        leadingIcon = {
+                            Icon(Icons.Outlined.Search, contentDescription = null)
+                        },
+                        trailingIcon = {
+                            if (sneakerSearchQuery.isNotEmpty()) {
+                                IconButton(onClick = { sneakerSearchQuery = "" }) {
+                                    Icon(Icons.Outlined.Clear, contentDescription = "Limpar busca")
+                                }
+                            }
+                        },
+                        shape = ImageShape,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
                         )
-                    }
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                if (filteredSneakers.isEmpty()) {
+                    Text(
+                        text = "Nenhum tênis encontrado para \"$sneakerSearchQuery\"",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    SneakerChipGrid(
+                        sneakers = filteredSneakers,
+                        selectedSneakerId = uiState.selectedSneakerId,
+                        onSelect = { viewModel.selectSneaker(it) }
+                    )
                 }
 
                 if (hasSelection && !uiState.isProcessing && !resultReady) {
@@ -251,6 +299,34 @@ fun ComposeImageScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun SneakerChipGrid(
+    sneakers: List<Sneaker>,
+    selectedSneakerId: Long?,
+    onSelect: (Long) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        sneakers.chunked(SNEAKER_GRID_COLUMNS).forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                rowItems.forEach { sneaker ->
+                    SneakerChip(
+                        sneaker = sneaker,
+                        selected = selectedSneakerId == sneaker.id,
+                        onClick = { onSelect(sneaker.id) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                repeat(SNEAKER_GRID_COLUMNS - rowItems.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
         }
     }
 }
@@ -316,7 +392,7 @@ private fun ResultScreen(
                 onClick = onEdit,
                 modifier = Modifier.padding(horizontal = 12.dp)
             ) {
-                androidx.compose.material3.Icon(
+                Icon(
                     Icons.Outlined.Edit,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
@@ -369,7 +445,7 @@ private fun EmptyPreviewHint() {
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            androidx.compose.material3.Icon(
+            Icon(
                 Icons.Outlined.Image,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
@@ -377,9 +453,9 @@ private fun EmptyPreviewHint() {
             )
         }
         Spacer(modifier = Modifier.height(12.dp))
-        Text("Seu resultado aparece aqui", style = MaterialTheme.typography.titleMedium)
+        Text("Prévia da foto", style = MaterialTheme.typography.titleMedium)
         Text(
-            "Escolha a foto e o tênis abaixo",
+            "Escolha uma foto acima",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -391,7 +467,8 @@ private fun EmptyPreviewHint() {
 private fun SneakerChip(
     sneaker: Sneaker,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val borderColor = if (selected) {
         MaterialTheme.colorScheme.primary
@@ -401,7 +478,7 @@ private fun SneakerChip(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .clip(ImageShape)
             .clickable(onClick = onClick)
             .border(
@@ -419,20 +496,21 @@ private fun SneakerChip(
             iconPath = sneaker.iconPath,
             contentDescription = sneaker.name,
             modifier = Modifier
-                .size(64.dp)
+                .fillMaxWidth()
+                .height(56.dp)
                 .clip(ImageShape)
                 .background(Color.Black)
-                .padding(5.dp),
+                .padding(4.dp),
             contentScale = ContentScale.Fit
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            sneaker.name,
-            style = MaterialTheme.typography.labelMedium,
-            maxLines = 1,
+            text = sneaker.name,
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.size(width = 72.dp, height = 16.dp),
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }

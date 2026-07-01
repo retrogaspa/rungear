@@ -1,5 +1,6 @@
 package com.appsho.sneakers.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +12,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -28,6 +32,7 @@ import com.appsho.sneakers.ui.components.ScreenHeader
 @Composable
 fun SettingsScreen(viewModel: ThemeViewModel) {
     val darkMode by viewModel.darkMode.collectAsState()
+    val gridColumns by viewModel.collectionGridColumns.collectAsState()
 
     Column(
         modifier = Modifier
@@ -73,6 +78,50 @@ fun SettingsScreen(viewModel: ThemeViewModel) {
                         uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        SectionCard(modifier = Modifier.padding(horizontal = 20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.GridView,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(end = 12.dp)
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Colunas na coleção",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "Quantos tênis aparecem por linha na aba Coleção",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                for (columns in 1..4) {
+                    FilterChip(
+                        selected = gridColumns == columns,
+                        onClick = { viewModel.setCollectionGridColumns(columns) },
+                        label = { Text("$columns") },
+                        modifier = Modifier.weight(1f),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    )
+                }
             }
         }
 
