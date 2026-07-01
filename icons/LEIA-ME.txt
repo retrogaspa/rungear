@@ -1,0 +1,30 @@
+COMO COLOCAR OS ICONES DOS TENIS
+================================
+
+Coloque cada imagem PNG (ou WEBP/JPG) na pasta correspondente.
+Use fundo transparente (PNG) para melhor resultado na barra preta.
+
+CATALOGO (nome exato do arquivo):
+---------------------------------
+icons/fila/racer_carbon_2/verde.png
+icons/olympikus/corre_5/preto_amarelo.png
+icons/chunta/sn/beige.png
+icons/asics/dynablast/azul_claro.png
+
+PERSONALIZADO:
+--------------
+icons/personalizado/  -> apenas referencia; uploads do app ficam no celular.
+
+DEPOIS DE ADICIONAR AS IMAGENS:
+-------------------------------
+1. Abra o projeto no Android Studio
+2. Build > Rebuild Project (ou rode o app de novo)
+3. O Gradle copia automaticamente icons/ para o app
+
+Formatos aceitos: .png .webp .jpg .jpeg
+
+TAMANHO DOS ICONES DO CATALOGO:
+-------------------------------
+Gere sempre 100 x 100 pixels (quadrado).
+Fundo preto (#000000) combina com a barra lateral do app.
+O tênis centralizado no quadrado encaixa automaticamente.
