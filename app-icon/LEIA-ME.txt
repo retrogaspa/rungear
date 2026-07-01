@@ -1,0 +1,34 @@
+ICONE DO APP RUNGEAR (launcher)
+================================
+
+Coloque aqui a imagem do icone que aparece na tela inicial do celular.
+
+ARQUIVO
+-------
+Salve como:  icone.png
+
+TAMANHO RECOMENDADO
+-------------------
+- Minimo: 512 x 512 pixels (quadrado)
+- Ideal: 1024 x 1024 pixels (para Play Store)
+
+100 x 100 funciona para teste, mas pode ficar pixelado no celular.
+Se puder, faca maior e centralize o desenho.
+
+FORMATO
+-------
+PNG com fundo transparente (recomendado)
+ou PNG/JPG com fundo solido.
+
+DICAS DE DESIGN
+---------------
+- Formato quadrado
+- Deixe margem nas bordas (o Android corta cantos em circulo)
+- O conteudo importante deve ficar no centro (~70% da area)
+
+DEPOIS DE COLOCAR O icone.png
+-----------------------------
+1. Avise no chat ou rode o app de novo apos integrarmos no projeto
+2. O icone entra em app/src/main/res/ e aparece na home do celular
+
+Fundo atual do app: verde #1B5E20 (pode mudar depois).
