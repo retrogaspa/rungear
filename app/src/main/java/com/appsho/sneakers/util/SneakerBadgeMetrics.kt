@@ -1,30 +1,32 @@
 package com.appsho.sneakers.util
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
- * Métricas da barra lateral baseadas em ícones fonte de [SOURCE_ICON_PX]×[SOURCE_ICON_PX]
- * numa foto de referência de [REFERENCE_IMAGE_WIDTH_PX] px de largura.
+ * Badge estilo corrida (referência Strava) — retângulo vertical + círculo no topo.
+ * Ancorado no canto superior direito da foto.
  */
 object SneakerBadgeMetrics {
 
     const val SOURCE_ICON_PX = 100f
     const val REFERENCE_IMAGE_WIDTH_PX = 1080f
 
-    /** Margem interna ao redor do ícone no topo da barra (px na foto de referência). */
-    const val ICON_PAD_H_REF = 16f
-    const val ICON_PAD_TOP_REF = 14f
-    const val ICON_PAD_BOTTOM_REF = 10f
+    /** Margens do badge em relação ao topo/direita da foto (px na ref. 1080). */
+    const val MARGIN_TOP_REF = 12f
+    const val MARGIN_RIGHT_REF = 12f
 
-    const val TEXT_SIZE_REF = 22f
-    const val TEXT_SECTION_PAD_REF = 20f
-    const val BODY_WIDTH_RATIO = 0.68f
+    /** Faixa retangular do nome (estreita, vertical). */
+    const val BODY_WIDTH_REF = 38f
+
+    /** Círculo do ícone — maior que a faixa de texto. */
+    const val BULB_DIAMETER_REF = 74f
+
+    /** Próximo ao tamanho da badge “Amazfit T-Rex 3” na referência Strava. */
+    const val TEXT_SIZE_REF = 30f
+    const val TEXT_PAD_VERTICAL_REF = 14f
+    const val ICON_PAD_IN_BULB_REF = 8f
 
     fun scale(imageWidth: Float, refPx: Float): Float =
         imageWidth * refPx / REFERENCE_IMAGE_WIDTH_PX
@@ -32,85 +34,80 @@ object SneakerBadgeMetrics {
     fun iconSlotSize(imageWidth: Float): Int =
         scale(imageWidth, SOURCE_ICON_PX).roundToInt().coerceAtLeast(1)
 
-    fun topSectionHeight(imageWidth: Float, iconSlot: Int): Float =
-        iconSlot + scale(imageWidth, ICON_PAD_TOP_REF) + scale(imageWidth, ICON_PAD_BOTTOM_REF)
-
-    fun topBulbWidth(imageWidth: Float, iconSlot: Int): Float =
-        iconSlot + scale(imageWidth, ICON_PAD_H_REF) * 2f
-
     fun textSizePx(imageWidth: Float): Float = scale(imageWidth, TEXT_SIZE_REF)
 
     data class Layout(
-        val iconSlot: Int,
-        val topSectionHeight: Float,
-        val textSectionHeight: Float,
-        val barWidth: Float,
-        val totalBarHeight: Float,
-        val barLeft: Float,
-        val barTop: Float,
-        val iconDestRect: RectF
+        val bodyLeft: Float,
+        val bodyRight: Float,
+        val bodyTop: Float,
+        val bodyBottom: Float,
+        val bulbCenterX: Float,
+        val bulbCenterY: Float,
+        val bulbRadius: Float,
+        val bulbTop: Float,
+        val iconDestRect: RectF,
+        val textClipRect: RectF
     )
 
-    fun compute(
-        imageWidth: Float,
-        imageHeight: Float,
-        textLength: Float,
-        textSizePx: Float
-    ): Layout {
-        val innerPad = scale(imageWidth, 8f)
-        val iconSlot = iconSlotSize(imageWidth)
-        val topH = topSectionHeight(imageWidth, iconSlot)
-        val textPad = scale(imageWidth, TEXT_SECTION_PAD_REF)
-        val textH = textLength + textPad * 2f
-        val totalH = topH + textH
+    fun compute(imageWidth: Float, textLength: Float, textSizePx: Float): Layout {
+        val marginTop = scale(imageWidth, MARGIN_TOP_REF)
+        val marginRight = scale(imageWidth, MARGIN_RIGHT_REF)
 
-        val topW = topBulbWidth(imageWidth, iconSlot)
-        val textBarW = textSizePx * 1.25f + scale(imageWidth, 12f)
-        val barW = max(topW, textBarW)
+        val bodyRight = imageWidth - marginRight
+        val bodyWidth = scale(imageWidth, BODY_WIDTH_REF)
+        val bodyLeft = bodyRight - bodyWidth
 
-        val barLeft = imageWidth - barW
-        val barTop = ((imageHeight - totalH) / 2f).coerceAtLeast(innerPad)
+        val bulbDiameter = scale(imageWidth, BULB_DIAMETER_REF)
+        val bulbRadius = bulbDiameter / 2f
 
-        val iconPadH = scale(imageWidth, ICON_PAD_H_REF)
-        val iconPadTop = scale(imageWidth, ICON_PAD_TOP_REF)
+        // Círculo no topo; retângulo do nome começa na linha de tangência inferior
+        val bulbTop = marginTop
+        val bodyTop = bulbTop + bulbDiameter
+        val textPad = scale(imageWidth, TEXT_PAD_VERTICAL_REF)
+        val bodyBottom = bodyTop + textLength + textPad * 2f
+
+        val bulbCenterX = bodyRight - bulbRadius
+        val bulbCenterY = bulbTop + bulbRadius
+
+        val iconPad = scale(imageWidth, ICON_PAD_IN_BULB_REF)
         val iconDest = RectF(
-            barLeft + iconPadH,
-            barTop + iconPadTop,
-            barLeft + iconPadH + iconSlot,
-            barTop + iconPadTop + iconSlot
+            bulbCenterX - bulbRadius + iconPad,
+            bulbTop + iconPad,
+            bodyRight - iconPad,
+            bodyTop - iconPad
         )
 
         return Layout(
-            iconSlot = iconSlot,
-            topSectionHeight = topH,
-            textSectionHeight = textH,
-            barWidth = barW,
-            totalBarHeight = totalH,
-            barLeft = barLeft,
-            barTop = barTop,
-            iconDestRect = iconDest
+            bodyLeft = bodyLeft,
+            bodyRight = bodyRight,
+            bodyTop = bodyTop,
+            bodyBottom = bodyBottom,
+            bulbCenterX = bulbCenterX,
+            bulbCenterY = bulbCenterY,
+            bulbRadius = bulbRadius,
+            bulbTop = bulbTop,
+            iconDestRect = iconDest,
+            textClipRect = RectF(bodyLeft, bodyTop, bodyRight, bodyBottom)
         )
     }
 }
 
-object SneakerIconDraw {
-
-    private val bitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+object SneakerBadgePath {
 
     /**
-     * Desenha o bitmap inteiro dentro do retângulo destino (fit center, sem distorcer).
+     * Retângulo (cantos inferiores quadrados) + círculo saindo do topo, colado à direita.
      */
-    fun drawContained(canvas: Canvas, bitmap: Bitmap, dest: RectF) {
-        val srcW = bitmap.width.toFloat()
-        val srcH = bitmap.height.toFloat()
-        if (srcW <= 0f || srcH <= 0f) return
-
-        val scale = min(dest.width() / srcW, dest.height() / srcH)
-        val drawnW = srcW * scale
-        val drawnH = srcH * scale
-        val left = dest.left + (dest.width() - drawnW) / 2f
-        val top = dest.top + (dest.height() - drawnH) / 2f
-        val fitted = RectF(left, top, left + drawnW, top + drawnH)
-        canvas.drawBitmap(bitmap, null, fitted, bitmapPaint)
+    fun build(layout: SneakerBadgeMetrics.Layout): Path {
+        val bodyPath = Path().apply {
+            addRect(
+                RectF(layout.bodyLeft, layout.bodyTop, layout.bodyRight, layout.bodyBottom),
+                Path.Direction.CW
+            )
+        }
+        val bulbPath = Path().apply {
+            addCircle(layout.bulbCenterX, layout.bulbCenterY, layout.bulbRadius, Path.Direction.CW)
+        }
+        bodyPath.op(bulbPath, Path.Op.UNION)
+        return bodyPath
     }
 }

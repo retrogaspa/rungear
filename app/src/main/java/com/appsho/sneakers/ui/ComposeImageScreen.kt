@@ -22,17 +22,23 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.SaveAlt
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.SportsSoccer
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,6 +72,21 @@ fun ComposeImageScreen(
     val sneakers by viewModel.sneakers.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
 
+    var showResult by rememberSaveable { mutableStateOf(false) }
+    var dismissedResult by rememberSaveable { mutableStateOf(false) }
+
+    val hasSelection = uiState.baseImageUri != null && uiState.selectedSneakerId != null
+    val resultReady = uiState.previewBitmap != null && !uiState.isProcessing
+
+    LaunchedEffect(uiState.baseImageUri, uiState.selectedSneakerId) {
+        dismissedResult = false
+        showResult = false
+    }
+
+    LaunchedEffect(resultReady) {
+        if (resultReady && !dismissedResult) showResult = true
+    }
+
     LaunchedEffect(uiState.message) {
         uiState.message?.let {
             snackbarHostState.showSnackbar(it)
@@ -85,15 +106,6 @@ fun ComposeImageScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri -> uri?.let { viewModel.setBaseImage(it) } }
 
-    val currentStep = when {
-        uiState.previewBitmap != null -> 2
-        uiState.selectedSneakerId != null -> 2
-        uiState.baseImageUri != null -> 1
-        else -> 1
-    }
-
-    val canSave = uiState.previewBitmap != null && !uiState.isProcessing
-
     if (sneakers.isEmpty()) {
         Column(modifier = Modifier.fillMaxSize()) {
             ScreenHeader(
@@ -112,6 +124,27 @@ fun ComposeImageScreen(
         return
     }
 
+    if (showResult && resultReady) {
+        ResultScreen(
+            previewBitmap = uiState.previewBitmap!!,
+            isProcessing = uiState.isProcessing,
+            onSave = { viewModel.saveComposedImage() },
+            onShare = { viewModel.shareComposedImage() },
+            onEdit = {
+                dismissedResult = true
+                showResult = false
+            }
+        )
+        return
+    }
+
+    val currentStep = when {
+        hasSelection && uiState.isProcessing -> 2
+        uiState.selectedSneakerId != null -> 2
+        uiState.baseImageUri != null -> 1
+        else -> 1
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -120,13 +153,13 @@ fun ComposeImageScreen(
         ) {
             ScreenHeader(
                 title = "Criar",
-                subtitle = "Foto + tênis — barra automática na direita"
+                subtitle = "Escolha a foto e o tênis — o resultado aparece em seguida"
             )
 
             StepIndicator(
                 currentStep = currentStep,
-                totalSteps = 2,
-                labels = listOf("Foto", "Tênis"),
+                totalSteps = 3,
+                labels = listOf("Foto", "Tênis", "Resultado"),
                 modifier = Modifier.padding(horizontal = 20.dp)
             )
 
@@ -134,19 +167,22 @@ fun ComposeImageScreen(
 
             PreviewFrame(
                 modifier = Modifier.padding(horizontal = 20.dp),
-                isLoading = uiState.isProcessing && uiState.baseImageUri != null
+                isLoading = false
             ) {
                 when {
-                    uiState.previewBitmap != null -> {
-                        Image(
-                            bitmap = uiState.previewBitmap!!.asImageBitmap(),
-                            contentDescription = "Pré-visualização",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(8.dp)
-                                .clip(ImageShape),
-                            contentScale = ContentScale.Fit
-                        )
+                    hasSelection && uiState.isProcessing -> {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 3.dp
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                "Gerando resultado…",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                     uiState.baseImageUri != null -> {
                         AsyncImage(
@@ -160,38 +196,21 @@ fun ComposeImageScreen(
                         )
                     }
                     else -> {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(24.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(ImageShape)
-                                    .background(MaterialTheme.colorScheme.primaryContainer),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                androidx.compose.material3.Icon(
-                                    Icons.Outlined.Image,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                "Sua composição aparece aqui",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                "Comece escolhendo uma foto abaixo",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                        }
+                        EmptyPreviewHint()
                     }
                 }
+            }
+
+            if (hasSelection && uiState.isProcessing) {
+                Text(
+                    text = "Aguarde — montando a imagem com a barra do tênis…",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -205,10 +224,7 @@ fun ComposeImageScreen(
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "2. Escolher tênis",
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Text("2. Escolher tênis", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(10.dp))
 
                 LazyRow(
@@ -223,9 +239,92 @@ fun ComposeImageScreen(
                         )
                     }
                 }
+
+                if (hasSelection && !uiState.isProcessing && !resultReady) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        "Pronto! Gerando o resultado…",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(100.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun ResultScreen(
+    previewBitmap: android.graphics.Bitmap,
+    isProcessing: Boolean,
+    onSave: () -> Unit,
+    onShare: () -> Unit,
+    onEdit: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+        ) {
+            ScreenHeader(
+                title = "Resultado",
+                subtitle = "Confira a imagem antes de salvar ou compartilhar"
+            )
+
+            StepIndicator(
+                currentStep = 3,
+                totalSteps = 3,
+                labels = listOf("Foto", "Tênis", "Resultado"),
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            PreviewFrame(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                isLoading = isProcessing
+            ) {
+                Image(
+                    bitmap = previewBitmap.asImageBitmap(),
+                    contentDescription = "Resultado final",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp)
+                        .clip(ImageShape),
+                    contentScale = ContentScale.Fit
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Gostou do resultado?",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+            Text(
+                text = "Salve na galeria ou compartilhe direto.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+            )
+
+            TextButton(
+                onClick = onEdit,
+                modifier = Modifier.padding(horizontal = 12.dp)
+            ) {
+                androidx.compose.material3.Icon(
+                    Icons.Outlined.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(" Trocar foto ou tênis", modifier = Modifier.padding(start = 4.dp))
+            }
+
+            Spacer(modifier = Modifier.height(80.dp))
         }
 
         Box(
@@ -240,20 +339,51 @@ fun ComposeImageScreen(
             ) {
                 SecondaryButton(
                     text = "Compartilhar",
-                    onClick = { viewModel.shareComposedImage() },
-                    enabled = canSave,
+                    onClick = onShare,
+                    enabled = !isProcessing,
                     icon = Icons.Outlined.Share,
                     modifier = Modifier.weight(1f)
                 )
                 PrimaryButton(
                     text = "Salvar",
-                    onClick = { viewModel.saveComposedImage() },
-                    enabled = canSave,
+                    onClick = onSave,
+                    enabled = !isProcessing,
                     icon = Icons.Outlined.SaveAlt,
                     modifier = Modifier.weight(1f)
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun EmptyPreviewHint() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(24.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .clip(ImageShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            androidx.compose.material3.Icon(
+                Icons.Outlined.Image,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        Text("Seu resultado aparece aqui", style = MaterialTheme.typography.titleMedium)
+        Text(
+            "Escolha a foto e o tênis abaixo",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
