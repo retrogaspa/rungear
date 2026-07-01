@@ -100,7 +100,7 @@ fun SettingsScreen(viewModel: ThemeViewModel) {
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = "Quantos tênis aparecem por linha na aba Coleção",
+                        text = "Quantos tênis aparecem por linha na aba Coleções",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

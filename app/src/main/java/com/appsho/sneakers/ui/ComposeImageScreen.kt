@@ -129,8 +129,8 @@ fun ComposeImageScreen(
             EmptyState(
                 icon = Icons.Outlined.SportsSoccer,
                 title = "Nenhum tênis ainda",
-                description = "Vá em Coleção e adicione pelo menos um tênis para começar a criar.",
-                actionLabel = "Ir para Coleção",
+                description = "Vá em Coleções e adicione pelo menos um tênis para começar a criar.",
+                actionLabel = "Ir para Coleções",
                 onAction = onNavigateToCollection,
                 modifier = Modifier.fillMaxSize()
             )

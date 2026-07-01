@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    var currentTab by rememberSaveable { mutableStateOf(AppTab.SNEAKERS) }
+                    var currentTab by rememberSaveable { mutableStateOf(AppTab.COMPOSE) }
                     RunGearNavHost(
                         app = app,
                         themeViewModel = themeViewModel,

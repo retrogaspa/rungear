@@ -119,39 +119,22 @@ fun RunGearNavHost(
             ) {
 
                 NavigationBarItem(
-
-                    selected = currentTab == AppTab.SNEAKERS,
-
-                    onClick = { onTabChange(AppTab.SNEAKERS) },
-
-                    icon = {
-
-                        Icon(Icons.Outlined.GridView, contentDescription = null)
-
-                    },
-
-                    label = { Text(AppTab.SNEAKERS.label) },
-
-                    colors = navItemColors()
-
-                )
-
-                NavigationBarItem(
-
                     selected = currentTab == AppTab.COMPOSE,
-
                     onClick = { onTabChange(AppTab.COMPOSE) },
-
                     icon = {
-
                         Icon(Icons.Default.AutoAwesome, contentDescription = null)
-
                     },
-
                     label = { Text(AppTab.COMPOSE.label) },
-
                     colors = navItemColors()
-
+                )
+                NavigationBarItem(
+                    selected = currentTab == AppTab.SNEAKERS,
+                    onClick = { onTabChange(AppTab.SNEAKERS) },
+                    icon = {
+                        Icon(Icons.Outlined.GridView, contentDescription = null)
+                    },
+                    label = { Text(AppTab.SNEAKERS.label) },
+                    colors = navItemColors()
                 )
 
                 NavigationBarItem(

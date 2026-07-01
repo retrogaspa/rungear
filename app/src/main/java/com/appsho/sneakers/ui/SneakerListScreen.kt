@@ -101,7 +101,7 @@ fun SneakerListScreen(
         if (sneakers.isEmpty()) {
             Column(modifier = Modifier.fillMaxSize()) {
                 ScreenHeader(
-                    title = "Coleção",
+                    title = "Coleções",
                     subtitle = "Marca → Modelo → Cor"
                 )
                 EmptyState(
@@ -117,7 +117,7 @@ fun SneakerListScreen(
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     ScreenHeader(
-                        title = "Coleção",
+                        title = "Coleções",
                         subtitle = "${sneakers.size} tênis na coleção"
                     )
                     val columns = gridColumns.coerceIn(1, 4)
