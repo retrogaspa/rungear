@@ -38,8 +38,6 @@ object SneakerIconLoader {
         }
         return BitmapFactory.decodeFile(iconRef)?.let { normalizeIconBitmap(it) }
     }
-
-    /** Garante ARGB e tamanho esperado para ícones 100×100 do catálogo. */
     private fun normalizeIconBitmap(bitmap: Bitmap): Bitmap {
         val normalized = if (bitmap.config != Bitmap.Config.ARGB_8888) {
             bitmap.copy(Bitmap.Config.ARGB_8888, false)
@@ -50,17 +48,19 @@ object SneakerIconLoader {
     }
 
     fun loadBitmapFromAssets(context: Context, variantKey: String): Bitmap? {
-        val basePath = assetRelativePath(variantKey) ?: return null
-        for (extension in SUPPORTED_EXTENSIONS) {
-            val path = "$basePath.$extension"
-            try {
-                context.assets.open(path).use { stream ->
-                    BitmapFactory.decodeStream(stream)?.let { bitmap ->
-                        return normalizeIconBitmap(bitmap)
+        for (key in PredefinedSneakers.assetVariantKeysToTry(variantKey)) {
+            val basePath = assetRelativePath(key) ?: continue
+            for (extension in SUPPORTED_EXTENSIONS) {
+                val path = "$basePath.$extension"
+                try {
+                    context.assets.open(path).use { stream ->
+                        BitmapFactory.decodeStream(stream)?.let { bitmap ->
+                            return normalizeIconBitmap(bitmap)
+                        }
                     }
+                } catch (_: IOException) {
+                    // tenta próxima extensão / caminho legado
                 }
-            } catch (_: IOException) {
-                // tenta próxima extensão
             }
         }
         return null

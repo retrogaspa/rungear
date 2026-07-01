@@ -126,19 +126,38 @@ object PredefinedSneakers {
         }
     }
 
+    /** Chaves antigas do catálogo → chave atual (ex.: dynablast → dynablast_5). */
+    fun canonicalVariantKey(variantKey: String): String =
+        variantKey.replace("asics:dynablast:", "asics:dynablast_5:")
+
+    fun canonicalModelKey(brandKey: String, modelKey: String): String =
+        if (brandKey == "asics" && modelKey == "dynablast") "dynablast_5" else modelKey
+
+    /** Caminhos de asset a tentar (pasta nova e legado). */
+    fun assetVariantKeysToTry(variantKey: String): List<String> {
+        val canonical = canonicalVariantKey(variantKey)
+        val keys = linkedSetOf(canonical, variantKey)
+        if (canonical.contains("dynablast_5")) {
+            keys.add(canonical.replace("dynablast_5", "dynablast"))
+        }
+        return keys.toList()
+    }
+
     fun getBrand(brandKey: String): PredefinedBrand? =
         brands.find { it.key == brandKey }
 
     fun getModel(brandKey: String, modelKey: String): PredefinedModel? =
-        getBrand(brandKey)?.models?.find { it.key == modelKey }
+        getBrand(brandKey)?.models?.find { it.key == canonicalModelKey(brandKey, modelKey) }
 
     fun getVariant(brandKey: String, modelKey: String, colorKey: String): PredefinedVariant? =
         allVariants.find {
-            it.brandKey == brandKey && it.modelKey == modelKey && it.colorKey == colorKey
+            it.brandKey == brandKey &&
+                it.modelKey == canonicalModelKey(brandKey, modelKey) &&
+                it.colorKey == colorKey
         }
 
     fun getVariantByKey(variantKey: String): PredefinedVariant? =
-        allVariants.find { it.variantKey == variantKey }
+        allVariants.find { it.variantKey == canonicalVariantKey(variantKey) }
 
     fun iconRef(variantKey: String): String = "$ICON_PREFIX$variantKey"
 
@@ -149,6 +168,11 @@ object PredefinedSneakers {
 
     fun resolveIconResId(iconPath: String): Int? {
         val variantKey = variantKeyFromRef(iconPath) ?: return null
-        return getVariantByKey(variantKey)?.iconResId
+        getVariantByKey(variantKey)?.iconResId?.let { return it }
+        // Fallback vetorial legado (pasta dynablast antes do rename)
+        if (canonicalVariantKey(variantKey).startsWith("asics:dynablast_5:")) {
+            return R.drawable.sneaker_asics_dynablast_azul_claro
+        }
+        return null
     }
 }

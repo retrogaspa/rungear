@@ -11,13 +11,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.appsho.sneakers.ui.AppTab
+import com.appsho.sneakers.ui.MainNavigationViewModel
 import com.appsho.sneakers.ui.RunGearNavHost
 import com.appsho.sneakers.ui.ThemeViewModel
 import com.appsho.sneakers.ui.theme.CanvasBg
@@ -56,16 +53,16 @@ class MainActivity : ComponentActivity() {
             }
 
             RunGearTheme(darkTheme = darkMode) {
+                val navViewModel: MainNavigationViewModel = viewModel()
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    var currentTab by rememberSaveable { mutableStateOf(AppTab.COMPOSE) }
                     RunGearNavHost(
                         app = app,
                         themeViewModel = themeViewModel,
-                        currentTab = currentTab,
-                        onTabChange = { currentTab = it }
+                        currentTab = navViewModel.currentTab,
+                        onTabChange = navViewModel::setTab
                     )
                 }
             }
