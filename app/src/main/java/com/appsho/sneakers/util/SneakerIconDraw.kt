@@ -10,12 +10,17 @@ object SneakerIconDraw {
 
     private val bitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
 
-    fun drawContained(canvas: Canvas, bitmap: Bitmap, dest: RectF) {
+    fun drawContained(
+        canvas: Canvas,
+        bitmap: Bitmap,
+        dest: RectF,
+        scaleBoost: Float = 1f
+    ) {
         val srcW = bitmap.width.toFloat()
         val srcH = bitmap.height.toFloat()
         if (srcW <= 0f || srcH <= 0f) return
 
-        val scale = min(dest.width() / srcW, dest.height() / srcH)
+        val scale = min(dest.width() / srcW, dest.height() / srcH) * scaleBoost
         val drawnW = srcW * scale
         val drawnH = srcH * scale
         val left = dest.left + (dest.width() - drawnW) / 2f

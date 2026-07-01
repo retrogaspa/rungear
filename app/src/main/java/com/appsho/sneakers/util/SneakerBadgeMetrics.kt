@@ -18,19 +18,24 @@ object SneakerBadgeMetrics {
     const val MARGIN_TOP_REF = 14f
     const val MARGIN_RIGHT_REF = 0f
 
-    const val BODY_WIDTH_MIN_REF = 44f
+    const val BODY_WIDTH_MIN_REF = 70f
     const val BULB_DIAMETER_REF = 92f
 
     /**
      * Quanto o retângulo sobe dentro do círculo (0–1 do diâmetro).
      * Cria a “gota” contínua em vez de bola separada.
      */
-    const val BULB_STEM_OVERLAP_RATIO = 0.46f
+    const val BULB_STEM_OVERLAP_RATIO = 0.40f
 
     const val TEXT_SIZE_REF = 30f
-    const val TEXT_PAD_HORIZONTAL_REF = 12f
-    const val TEXT_PAD_VERTICAL_REF = 22f
+    /** Padding do nome (+60% em relação aos valores anteriores). */
+    const val TEXT_PAD_HORIZONTAL_REF = 19f
+    const val TEXT_PAD_VERTICAL_REF = 35f
+    /** Espaço extra entre a zona do ícone e o início do texto. */
+    const val TEXT_TOP_GAP_REF = 30f
     const val ICON_PAD_IN_BULB_REF = 4f
+    /** Ícone 15% maior dentro da gota. */
+    const val ICON_SCALE_IN_BULB = 1.15f
 
     fun scale(imageWidth: Float, refPx: Float): Float =
         imageWidth * refPx / REFERENCE_IMAGE_WIDTH_PX
@@ -61,6 +66,7 @@ object SneakerBadgeMetrics {
 
         val textHorizPad = scale(imageWidth, TEXT_PAD_HORIZONTAL_REF)
         val textVertPad = scale(imageWidth, TEXT_PAD_VERTICAL_REF)
+        val textTopGap = scale(imageWidth, TEXT_TOP_GAP_REF)
         val bodyWidth = max(
             scale(imageWidth, BODY_WIDTH_MIN_REF),
             textSizePx + textHorizPad * 2f
@@ -74,7 +80,7 @@ object SneakerBadgeMetrics {
         // Retângulo sobe dentro do círculo → forma de gota contínua
         val stemOverlap = bulbDiameter * BULB_STEM_OVERLAP_RATIO
         val bodyTop = bulbTop + bulbDiameter - stemOverlap
-        val bodyBottom = bodyTop + textLength + textVertPad * 2f
+        val bodyBottom = bodyTop + textTopGap + textLength + textVertPad * 2f
 
         val bulbCenterX = bodyRight - bulbRadius
         val bulbCenterY = bulbTop + bulbRadius
@@ -89,7 +95,7 @@ object SneakerBadgeMetrics {
 
         val textClipRect = RectF(
             bodyLeft + textHorizPad,
-            bodyTop + textVertPad,
+            bodyTop + textTopGap + textVertPad,
             bodyRight - textHorizPad,
             bodyBottom - textVertPad
         )

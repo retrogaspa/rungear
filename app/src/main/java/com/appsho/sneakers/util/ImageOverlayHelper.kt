@@ -52,7 +52,12 @@ object ImageOverlayHelper {
         }
         canvas.drawPath(SneakerBadgePath.build(layout), barPaint)
 
-        SneakerIconDraw.drawContained(canvas, iconBitmap, layout.iconDestRect)
+        SneakerIconDraw.drawContained(
+            canvas,
+            iconBitmap,
+            layout.iconDestRect,
+            SneakerBadgeMetrics.ICON_SCALE_IN_BULB
+        )
 
         // Texto com padding interno na faixa retangular
         val textCenterX = (layout.textClipRect.left + layout.textClipRect.right) / 2f
