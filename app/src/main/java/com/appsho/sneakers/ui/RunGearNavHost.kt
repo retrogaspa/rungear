@@ -39,6 +39,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -61,6 +62,8 @@ fun RunGearNavHost(
 
     themeViewModel: ThemeViewModel,
 
+    navViewModel: MainNavigationViewModel,
+
     currentTab: AppTab,
 
     onTabChange: (AppTab) -> Unit
@@ -82,7 +85,12 @@ fun RunGearNavHost(
     )
     val gridColumns by themeViewModel.collectionGridColumns.collectAsState()
 
-
+    val pendingShareUri = navViewModel.pendingShareImageUri
+    LaunchedEffect(pendingShareUri) {
+        val uri = pendingShareUri ?: return@LaunchedEffect
+        composeViewModel.setSharedImage(uri)
+        navViewModel.clearPendingShareImage()
+    }
 
     Scaffold(
 

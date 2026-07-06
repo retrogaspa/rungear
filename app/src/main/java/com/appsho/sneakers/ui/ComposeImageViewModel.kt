@@ -57,6 +57,19 @@ class ComposeImageViewModel(
         schedulePreviewUpdate()
     }
 
+    /** Imagem recebida via Compartilhar de outro app. */
+    fun setSharedImage(uri: Uri) {
+        recyclePreviewBitmap()
+        _uiState.update {
+            it.copy(
+                baseImageUri = uri,
+                selectedSneakerId = null,
+                previewBitmap = null,
+                message = null
+            )
+        }
+    }
+
     fun selectSneaker(sneakerId: Long) {
         _uiState.update { it.copy(selectedSneakerId = sneakerId, message = null) }
         schedulePreviewUpdate()
